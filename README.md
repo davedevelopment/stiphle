@@ -30,6 +30,8 @@ Use combinations of values to provide bursting etc, though use carefully as it
 screws with your mind
 
 ``` php 
+<?php
+
 $throttle = new Stiphle\Throttle\LeakyBucket;
 $identifier = 'dave';
 for(;;) {
