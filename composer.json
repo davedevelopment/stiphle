@@ -1,0 +1,23 @@
+{
+    "name": "davedevelopment/stiphle",
+    "type": "library",
+    "description": "Simple rate limiting/throttling for php",
+    "keywords": ["throttle", "throttling", "rate limiting", "rate limit"],
+    "homepage": "http://github.com/davedevelopment/stiphle",
+    "license": "MIT",
+    "authors": [{
+        "name": "Dave Marshall",
+        "email": "dave.marshall@atstsolutions.co.uk",
+        "homepage": "http://davedevelopment.co.uk"
+    }],
+
+    "require": {
+        "php": ">=5.3.1"
+    },
+
+    "autoload": {
+        "psr-0": {
+            "Stiphle": "src/"
+        }
+    }
+}
