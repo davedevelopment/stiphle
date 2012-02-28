@@ -70,6 +70,32 @@ for(;;) {
 
 ```
 
+Throttle Strategies
+-------------------
+
+There are currently two types of throttles, [Leaky
+Bucket](http://en.wikipedia.org/wiki/Leaky_bucket) and a simple fixed time
+window. 
+
+``` php 
+
+/**
+ * Throttle to 1000 per *rolling* 24 hours, e.g. the counter will not reset at
+ * midnight
+ */
+$throttle = new Stiphle\Throttle\LeakyBucket;
+$throttle->throttle('api.request', 1000, 86400000);
+
+/**
+ * Throttle to 1000 per calendar day, counter will reset at midnight
+ */
+$throttle = new Stiphle\Throttle\TimeWindow;
+$throttle->throttle('api.request', 1000, 86400000);
+
+```
+
+__NB:__ The current implementation of the `TimeWindow` throttle will only work on 64-bit architectures!
+
 Todo
 ----
 
