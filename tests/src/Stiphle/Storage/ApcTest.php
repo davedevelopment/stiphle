@@ -42,6 +42,10 @@ class ApcTest extends PHPUnit_Framework_TestCase
      */
     public function testLockThrowsLockWaitTimeoutException()
     {
+        if (!ini_get('apc.enable_cli') && !ini_get('apcu.enable_cli')) {
+            $this->markTestSkipped('APC and APCu needs enabling for the cli via apc.enable_cli=1 or apcu.enable_cli=1');
+        }
+
         $this->storage->lock('dave');        
         $this->storage->lock('dave');
     }
@@ -49,6 +53,10 @@ class ApcTest extends PHPUnit_Framework_TestCase
 
     public function testLockRespectsLockWaitTimeoutValue()
     {
+        if (!ini_get('apc.enable_cli') && !ini_get('apcu.enable_cli')) {
+            $this->markTestSkipped('APC and APCu needs enabling for the cli via apc.enable_cli=1 or apcu.enable_cli=1');
+        }
+
         /**
          * Test we can do this 
          */
