@@ -51,17 +51,24 @@ class LeakyBucket implements ThrottleInterface
      */
     public function throttle($key, $limit, $milliseconds, $doWait = true)
     {
-        $wait = $this->getEstimate($key, $limit, $milliseconds);
+        $key      = $this->getStorageKey($key, $limit, $milliseconds);
+        $wait     = 0;
+        $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
+        if ($newRatio > $milliseconds) {
+            $wait = ceil($newRatio - $milliseconds);
+        }
 
         /**
          * Try and do our waiting without a lock
          */
-        if ($doWait && (int) ini_get('max-execution-time') > $wait) {
+        if ($wait > 0 && $doWait && (int) ini_get('max-execution-time') > $wait) {
             usleep($wait * 1000);
+        }
 
-            /**
-             * Lock, record and release
-             */
+        /**
+         * Lock, record and release
+         */
+        if (!$wait) {
             $this->storage->lock($key);
             $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
             $this->setLastRatio($key, $newRatio);
@@ -92,6 +99,7 @@ class LeakyBucket implements ThrottleInterface
         if ($newRatio > $milliseconds) {
             $wait = ceil($newRatio - $milliseconds);
         }
+
         return $wait;
     }
 
