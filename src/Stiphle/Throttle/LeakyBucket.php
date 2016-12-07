@@ -52,13 +52,8 @@ class LeakyBucket implements ThrottleInterface
         /**
          * Try and do our waiting without a lock
          */
-        $key = $this->getStorageKey($key, $limit, $milliseconds); 
-        $wait     = 0;
-        $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
+        $wait = $this->getEstimate($key, $limit, $milliseconds);
 
-        if ($newRatio > $milliseconds) {
-            $wait = ceil($newRatio - $milliseconds);
-        }
         usleep($wait * 1000);
 
         /**
@@ -69,6 +64,7 @@ class LeakyBucket implements ThrottleInterface
         $this->setLastRatio($key, $newRatio);
         $this->setLastRequest($key, microtime(1));
         $this->storage->unlock($key);
+
         return $wait;
     }
 
@@ -85,7 +81,7 @@ class LeakyBucket implements ThrottleInterface
      */
     public function getEstimate($key, $limit, $milliseconds)
     {
-        $key = $this->getStorageKey($key, $limit, $milliseconds); 
+        $key      = $this->getStorageKey($key, $limit, $milliseconds);
         $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
         $wait     = 0;
         if ($newRatio > $milliseconds) {
