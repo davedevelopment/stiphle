@@ -61,7 +61,7 @@ class LeakyBucket implements ThrottleInterface
         /**
          * Try and do our waiting without a lock
          */
-        if ($wait > 0 && $doWait && (int) ini_get('max-execution-time') > $wait) {
+        if ($wait > 0 && $doWait && (int) ini_get('max-execution-time') > ($wait / 1000)) {
             usleep($wait * 1000);
         }
 
