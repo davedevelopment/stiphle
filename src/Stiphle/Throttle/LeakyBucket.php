@@ -43,32 +43,39 @@ class LeakyBucket implements ThrottleInterface
      * Throttle
      *
      * @param string $key  - A unique key for what we're throttling
-     * @param int $limit   - How many are allowed
-     * @param int $milliseconds - In this many milliseconds
+     * @param int    $limit   - How many are allowed
+     * @param int    $milliseconds - In this many milliseconds
+     * @param bool   $doWait - Wait or not
+     *
      * @return void
      */
-    public function throttle($key, $limit, $milliseconds)
+    public function throttle($key, $limit, $milliseconds, $doWait = true)
     {
-        /**
-         * Try and do our waiting without a lock
-         */
-        $key = $this->getStorageKey($key, $limit, $milliseconds); 
+        $key      = $this->getStorageKey($key, $limit, $milliseconds);
         $wait     = 0;
         $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
-
         if ($newRatio > $milliseconds) {
             $wait = ceil($newRatio - $milliseconds);
         }
-        usleep($wait * 1000);
 
         /**
-         * Lock, record and release 
+         * Try and do our waiting without a lock
          */
-        $this->storage->lock($key);
-        $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
-        $this->setLastRatio($key, $newRatio);
-        $this->setLastRequest($key, microtime(1));
-        $this->storage->unlock($key);
+        if ($wait > 0 && $doWait && (int) ini_get('max-execution-time') > ($wait / 1000)) {
+            usleep($wait * 1000);
+        }
+
+        /**
+         * Lock, record and release
+         */
+        if (!$wait) {
+            $this->storage->lock($key);
+            $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
+            $this->setLastRatio($key, $newRatio);
+            $this->setLastRequest($key, microtime(1));
+            $this->storage->unlock($key);
+        }
+
         return $wait;
     }
 
@@ -78,19 +85,21 @@ class LeakyBucket implements ThrottleInterface
      * How long would I have to wait to make a request?
      *
      * @param string $key  - A unique key for what we're throttling
-     * @param int $limit   - How many are allowed
-     * @param int $milliseconds - In this many milliseconds
+     * @param int    $limit   - How many are allowed
+     * @param int    $milliseconds - In this many milliseconds
+     *
      * @return int - the number of milliseconds before this request should be allowed
      * to pass
      */
     public function getEstimate($key, $limit, $milliseconds)
     {
-        $key = $this->getStorageKey($key, $limit, $milliseconds); 
+        $key      = $this->getStorageKey($key, $limit, $milliseconds);
         $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
         $wait     = 0;
         if ($newRatio > $milliseconds) {
             $wait = ceil($newRatio - $milliseconds);
         }
+
         return $wait;
     }
 
@@ -101,8 +110,9 @@ class LeakyBucket implements ThrottleInterface
      * requests allowed
      *
      * @param string $key  - A unique key for what we're throttling
-     * @param int $limit   - How many are allowed
-     * @param int $milliseconds - In this many milliseconds
+     * @param int    $limit   - How many are allowed
+     * @param int    $milliseconds - In this many milliseconds
+     *
      * @return float
      */
     protected function getNewRatio($key, $limit, $milliseconds)
@@ -123,19 +133,21 @@ class LeakyBucket implements ThrottleInterface
      * Get storage key
      *
      * @param string $key  - A unique key for what we're throttling
-     * @param int $limit   - How many are allowed
-     * @param int $milliseconds - In this many milliseconds
+     * @param int    $limit   - How many are allowed
+     * @param int    $milliseconds - In this many milliseconds
+     *
      * @return string
      */
     protected function getStorageKey($key, $limit, $milliseconds)
     {
-        return $key . '::' . $limit . '::' . $milliseconds; 
+        return $key . '::' . $limit . '::' . $milliseconds;
     }
 
     /**
      * Set Storage
      *
      * @param StorageInterface $storage
+     *
      * @return LeakyBucket
      */
     public function setStorage(StorageInterface $storage)
@@ -148,6 +160,7 @@ class LeakyBucket implements ThrottleInterface
      * Get Last Ratio
      *
      * @param string $key
+     *
      * @return float
      */
     protected function getLastRatio($key)
@@ -159,7 +172,8 @@ class LeakyBucket implements ThrottleInterface
      * Set Last Ratio
      *
      * @param string $key
-     * @param float $ratio
+     * @param float  $ratio
+     *
      * @return void
      */
     protected function setLastRatio($key, $ratio)
@@ -171,6 +185,7 @@ class LeakyBucket implements ThrottleInterface
      * Get Last Request
      *
      * @param string $key
+     *
      * @return float
      */
     protected function getLastRequest($key)
@@ -182,7 +197,8 @@ class LeakyBucket implements ThrottleInterface
      * Set Last Request
      *
      * @param string $key
-     * @param float $request
+     * @param float  $request
+     *
      * @return void
      */
     protected function setLastRequest($key, $request)

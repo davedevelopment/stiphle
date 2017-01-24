@@ -17,6 +17,7 @@ class DoctrineCache implements StorageInterface
 {
     protected $lockWaitTimeout = 1000;
     protected $lockWaitInterval = 100;
+    protected $sleep = 0;
 
     public function __construct(Cache $cache, $lockWaitTimeout = 1000, $lockWaitInterval = 100)
     {
