@@ -45,7 +45,7 @@ class LeakyBucket implements ThrottleInterface
      * @param string $key  - A unique key for what we're throttling
      * @param int $limit   - How many are allowed
      * @param int $milliseconds - In this many milliseconds
-     * @return void
+     * @return int
      */
     public function throttle($key, $limit, $milliseconds)
     {
