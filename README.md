@@ -1,6 +1,13 @@
 Stiphle
 ======
 
+Install via Composer
+-------
+
+```
+composer require davedevelopment/stiphle
+```
+
 What is it?
 -----------
 
