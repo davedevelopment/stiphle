@@ -61,7 +61,7 @@ class Redis implements StorageInterface
      */
     public function set($key, $value)
     {
-        $this->redisClient->set($key, $value, 'PX', 3600);
+        $this->redisClient->set($key, $value);
     }
 
     private function getLockKey($key)
