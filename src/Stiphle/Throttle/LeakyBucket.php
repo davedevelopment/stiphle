@@ -45,7 +45,7 @@ class LeakyBucket implements ThrottleInterface
      * Pass this function a key to describe the resource, and the $limit of requests against that in $miliseconds. If
      * that limit has been exceeded the function will wait until the request can be fufilled before continuing.
      *
-     * This function waits until the request can be satisfied. 
+     * This function waits until the request can be satisfied.
      *
      * @param string $key  - A unique key for what we're throttling
      * @param int $limit   - How many are allowed
@@ -96,11 +96,11 @@ class LeakyBucket implements ThrottleInterface
          * Try and do our waiting without a lock
          */
         $key = $this->getStorageKey($key, $limit, $milliseconds);
-        $return   = true;
+        $shouldAccept   = true;
         $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
 
         if ($newRatio > $milliseconds) {
-            $return = false;
+            $shouldAccept = false;
         }
 
         /**
@@ -111,7 +111,7 @@ class LeakyBucket implements ThrottleInterface
         $this->setLastRatio($key, $newRatio);
         $this->setLastRequest($key, microtime(1));
         $this->storage->unlock($key);
-        return $return;
+        return $shouldAccept;
     }
 
     /**
