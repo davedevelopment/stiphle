@@ -42,6 +42,11 @@ class LeakyBucket implements ThrottleInterface
     /**
      * Throttle
      *
+     * Pass this function a key to describe the resource, and the $limit of requests against that in $miliseconds. If
+     * that limit has been exceeded the function will wait until the request can be fufilled before continuing.
+     *
+     * This function waits until the request can be satisfied. 
+     *
      * @param string $key  - A unique key for what we're throttling
      * @param int $limit   - How many are allowed
      * @param int $milliseconds - In this many milliseconds
@@ -70,6 +75,43 @@ class LeakyBucket implements ThrottleInterface
         $this->setLastRequest($key, microtime(1));
         $this->storage->unlock($key);
         return $wait;
+    }
+
+    /**
+     * shouldAccept
+     *
+     * Pass this function a key to describe the resource, and the $limit of requests against that in $miliseconds. The
+     * function will return true if the request should be completed, and false if it should not.
+     *
+     * This function tells you if you're under your specified threshold, so you can decide to reject it if not.
+     *
+     * @param string $key  - A unique key for what we're throttling
+     * @param int $limit   - How many are allowed
+     * @param int $milliseconds - In this many milliseconds
+     * @return bool
+     */
+    public function shouldAccept($key, $limit, $milliseconds)
+    {
+        /**
+         * Try and do our waiting without a lock
+         */
+        $key = $this->getStorageKey($key, $limit, $milliseconds);
+        $return   = true;
+        $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
+
+        if ($newRatio > $milliseconds) {
+            $return = false;
+        }
+
+        /**
+         * Lock, record and release
+         */
+        $this->storage->lock($key);
+        $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
+        $this->setLastRatio($key, $newRatio);
+        $this->setLastRequest($key, microtime(1));
+        $this->storage->unlock($key);
+        return $return;
     }
 
     /**
