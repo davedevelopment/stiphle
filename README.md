@@ -101,7 +101,25 @@ $throttle->throttle('api.request', 1000, 86400000);
 
 ```
 
+If you would rather the library tell you that the request exceeds the specified threshold instead call:
+
+``` php
+$throttle = new Stiphle\Throttle\LeakyBucket;
+if ($estimate = $throttle->shouldAccept('switcher.global', 25, 60 * 1000 !== true)) {
+    header("Content-Type: application/json");
+    header("Retry-After: ".$estimate);
+    http_response_code(429);
+    exit;
+}
+
+
+```
+
+
 __NB:__ The current implementation of the `TimeWindow` throttle will only work on 64-bit architectures!
+
+__NB:__ Note the type sensitive comparison with `shouldAccept`, as positive integers indicating the numnber of ms before
+a successfull request can be initiated will cast to `TRUE`.
 
 Storage
 -------
