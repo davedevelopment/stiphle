@@ -57,7 +57,7 @@ class LeakyBucket implements ThrottleInterface
         /**
          * Try and do our waiting without a lock
          */
-        $key = $this->getStorageKey($key, $limit, $milliseconds); 
+        $key = $this->getStorageKey($key, $limit, $milliseconds);
         $wait     = 0;
         $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
 
@@ -67,7 +67,7 @@ class LeakyBucket implements ThrottleInterface
         usleep($wait * 1000);
 
         /**
-         * Lock, record and release 
+         * Lock, record and release
          */
         $this->storage->lock($key);
         $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
@@ -85,6 +85,11 @@ class LeakyBucket implements ThrottleInterface
      *
      * This function tells you if you're under your specified threshold, so you can decide to reject it if not.
      *
+     * It is possible if you receive several requests at ~exactly the same time that the application will accept more
+     * of them than they should. We're accepting that trade off to avoid holding the lock longer and keep speed up.
+     *
+     * This would occur if multiple threads executed $this->getEstimate() before one of them managed to record the request.
+     *
      * @param string $key  - A unique key for what we're throttling
      * @param int $limit   - How many are allowed
      * @param int $milliseconds - In this many milliseconds
@@ -92,26 +97,21 @@ class LeakyBucket implements ThrottleInterface
      */
     public function shouldAccept($key, $limit, $milliseconds)
     {
-        /**
-         * Try and do our waiting without a lock
-         */
-        $key = $this->getStorageKey($key, $limit, $milliseconds);
-        $shouldAccept   = true;
-        $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
-
-        if ($newRatio > $milliseconds) {
-            $shouldAccept = false;
+        if ($estimate = $this->getEstimate($key, $limit, $milliseconds)) {
+            return (int) $estimate / 1000;
         }
+
+        $storageKey = $this->getStorageKey($key, $limit, $milliseconds);
 
         /**
          * Lock, record and release
          */
-        $this->storage->lock($key);
-        $newRatio = $this->getNewRatio($key, $limit, $milliseconds);
-        $this->setLastRatio($key, $newRatio);
-        $this->setLastRequest($key, microtime(1));
-        $this->storage->unlock($key);
-        return $shouldAccept;
+        $this->storage->lock($storageKey);
+        $newRatio = $this->getNewRatio($storageKey, $limit, $milliseconds);
+        $this->setLastRatio($storageKey, $newRatio);
+        $this->setLastRequest($storageKey, microtime(1));
+        $this->storage->unlock($storageKey);
+        return true;
     }
 
     /**
