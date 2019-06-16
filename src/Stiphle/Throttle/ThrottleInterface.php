@@ -6,6 +6,8 @@
 
 namespace Stiphle\Throttle;
 
+use Stiphle\Storage\LockWaitTimeoutException;
+
 /**
  * This file is part of Stiphle
  *
@@ -29,7 +31,8 @@ interface ThrottleInterface
      * @param string $key  - A unique key for what we're throttling
      * @param int $limit   - How many are allowed
      * @param int $milliseconds - In this many milliseconds
-     * @return void
+     * @return int
+     * @throws LockWaitTimeoutException
      */
     public function throttle($key, $limit, $milliseconds);
 

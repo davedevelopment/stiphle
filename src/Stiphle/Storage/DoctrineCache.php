@@ -15,8 +15,14 @@ use Doctrine\Common\Cache\Cache;
 
 class DoctrineCache implements StorageInterface
 {
-    protected $lockWaitTimeout = 1000;
-    protected $lockWaitInterval = 100;
+    /** @var Cache */
+    protected $cache;
+
+    /** @var int */
+    protected $lockWaitTimeout;
+
+    /** @var int */
+    protected $lockWaitInterval;
 
     public function __construct(Cache $cache, $lockWaitTimeout = 1000, $lockWaitInterval = 100)
     {
@@ -28,13 +34,11 @@ class DoctrineCache implements StorageInterface
     public function setLockWaitTimeout($milliseconds)
     {
         $this->lockWaitTimeout = $milliseconds;
-        return;
     }
 
     public function setSleep($microseconds)
     {
-        $this->sleep = $microseconds;
-        return;
+        $this->lockWaitInterval = $microseconds;
     }
 
     public function lock($key)
@@ -46,11 +50,9 @@ class DoctrineCache implements StorageInterface
             if ($passed > $this->lockWaitTimeout) {
                 throw new LockWaitTimeoutException();
             }
-            usleep($this->sleep);
+            usleep($this->lockWaitInterval);
         }
         $this->cache->save($key, true);
-
-        return;
     }
 
     public function unlock($key)
@@ -67,10 +69,5 @@ class DoctrineCache implements StorageInterface
     public function set($key, $value)
     {
         $this->cache->save($key, $value);
-        return;
     }
-
 }
-
-
-

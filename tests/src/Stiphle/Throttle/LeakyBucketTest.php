@@ -6,7 +6,6 @@
 namespace Stiphle\Throttle;
 
 use \PHPUnit_Framework_TestCase;
-use Storage\Process;
 
 /**
  * This file is part of Stiphle
@@ -26,7 +25,8 @@ use Storage\Process;
  */
 class LeakyBucketTest extends PHPUnit_Framework_TestCase
 {
-    protected $storage = null;
+    /** @var LeakyBucket */
+    protected $throttle;
 
     public function setup()
     {
