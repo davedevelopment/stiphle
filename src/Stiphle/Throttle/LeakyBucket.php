@@ -5,9 +5,9 @@
  */
 namespace Stiphle\Throttle;
 
-use Stiphle\Throttle\ThrottleInterface;
-use Stiphle\Storage\StorageInterface;
+use Stiphle\Storage\LockWaitTimeoutException;
 use Stiphle\Storage\Process;
+use Stiphle\Storage\StorageInterface;
 
 /**
  * This file is part of Stiphle
@@ -46,6 +46,7 @@ class LeakyBucket implements ThrottleInterface
      * @param int $limit   - How many are allowed
      * @param int $milliseconds - In this many milliseconds
      * @return int
+     * @throws LockWaitTimeoutException
      */
     public function throttle($key, $limit, $milliseconds)
     {
@@ -164,7 +165,7 @@ class LeakyBucket implements ThrottleInterface
      */
     protected function setLastRatio($key, $ratio)
     {
-        return $this->storage->set($key . '::LASTRATIO', $ratio);
+        $this->storage->set($key . '::LASTRATIO', $ratio);
     }
 
     /**
@@ -187,6 +188,6 @@ class LeakyBucket implements ThrottleInterface
      */
     protected function setLastRequest($key, $request)
     {
-        return $this->storage->set($key . '::LASTREQUEST', $request);
+        $this->storage->set($key . '::LASTREQUEST', $request);
     }
 }

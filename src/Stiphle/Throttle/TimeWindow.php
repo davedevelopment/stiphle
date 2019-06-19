@@ -2,7 +2,7 @@
 
 namespace Stiphle\Throttle;
 
-use Stiphle\Throttle\ThrottleInterface;
+use Stiphle\Storage\LockWaitTimeoutException;
 use Stiphle\Storage\StorageInterface;
 use Stiphle\Storage\Process;
 
@@ -41,7 +41,8 @@ class TimeWindow implements ThrottleInterface
      * @param string $key  - A unique key for what we're throttling
      * @param int $limit   - How many are allowed
      * @param int $milliseconds - In this many milliseconds
-     * @return void
+     * @return int
+     * @throws LockWaitTimeoutException
      */
     public function throttle($key, $limit, $milliseconds)
     {
@@ -104,7 +105,7 @@ class TimeWindow implements ThrottleInterface
      * Set Storage
      *
      * @param StorageInterface $storage
-     * @return LeakyBucket
+     * @return TimeWindow
      */
     public function setStorage(StorageInterface $storage)
     {
